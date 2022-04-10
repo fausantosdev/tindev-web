@@ -1,5 +1,6 @@
 import React, {useEffect,useState} from 'react'
 import {useParams, Link} from 'react-router-dom'
+import {io} from 'socket.io-client'
 
 import logo from '../../assets/images/logo.png';
 import like from '../../assets/images/like.png';
@@ -11,6 +12,7 @@ import api from '../../services/api'
 
 const Main = () => {
     const [usersList, setUsersList] = useState([])
+    const [matchUser, setMatchUser] = useState(null)
     const { id: userId } = useParams()
 
     useEffect(() => {
@@ -27,6 +29,17 @@ const Main = () => {
         loadUsers()
     }, [ userId ])
 
+    useEffect(() => {
+        const socket = io(process.env.REACT_APP_API_URL, {
+            query: {
+                user: userId
+            }
+        })
+
+        socket.on('match', user => {
+            setMatchUser(user)
+        })
+    },[])
 
     const handleLike = async (id) => {
         await api.post(`user/${id}/like`, null, {
@@ -85,6 +98,15 @@ const Main = () => {
                 <div className='empty'>Acabou! Volte em breve. :)</div>
             ) }
 
+            {matchUser && (
+                <div className='matchContainer'>
+                    <h2>It's a match</h2>
+                    <img className='avatar' src={matchUser.avatar} alt='oxe'/>
+                    <strong>{matchUser.name}</strong>
+                    <p>{matchUser.bio}</p>
+                    <button type='submit' onClick={() => setMatchUser(null)}>FECHAR</button>
+                </div>
+            )}
         </div>
     )
 }
